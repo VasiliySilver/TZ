@@ -173,3 +173,4 @@ cython_debug/
 # Custom
 deployment/.pgdata
 .idea
+DEVELOPMENT_PLAN.md
