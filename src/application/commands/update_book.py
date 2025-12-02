@@ -6,6 +6,7 @@ from src.domain.entities.book import Book
 from src.domain.repositories.book_repository import IBookRepository
 from src.domain.repositories.author_repository import IAuthorRepository
 from src.domain.events.book_events import BookUpdatedEvent
+from src.infrastructure.messaging.publisher import EventPublisher
 
 
 @dataclass
@@ -25,10 +26,12 @@ class UpdateBookHandler:
     def __init__(
         self,
         book_repository: IBookRepository,
-        author_repository: IAuthorRepository
+        author_repository: IAuthorRepository,
+        event_publisher: EventPublisher | None = None
     ):
         self._book_repo = book_repository
         self._author_repo = author_repository
+        self._event_publisher = event_publisher
     
     async def handle(self, command: UpdateBookCommand) -> Book:
         """
@@ -67,6 +70,15 @@ class UpdateBookHandler:
         # Update in repository
         result = await self._book_repo.update(updated_book)
         
-        # TODO: Publish BookUpdatedEvent
+        # Publish BookUpdatedEvent
+        if self._event_publisher:
+            event = BookUpdatedEvent(book_id=result.id)
+            await self._event_publisher.publish(
+                routing_key="book.updated",
+                event_data={
+                    "book_id": str(event.book_id),
+                    "occurred_at": event.occurred_at.isoformat()
+                }
+            )
         
         return result

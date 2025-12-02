@@ -7,6 +7,7 @@ from src.domain.entities.author import Author
 from src.domain.repositories.book_repository import IBookRepository
 from src.domain.repositories.author_repository import IAuthorRepository
 from src.domain.events.book_events import BookCreatedEvent
+from src.infrastructure.messaging.publisher import EventPublisher
 
 
 @dataclass
@@ -25,10 +26,12 @@ class CreateBookHandler:
     def __init__(
         self,
         book_repository: IBookRepository,
-        author_repository: IAuthorRepository
+        author_repository: IAuthorRepository,
+        event_publisher: EventPublisher | None = None
     ):
         self._book_repo = book_repository
         self._author_repo = author_repository
+        self._event_publisher = event_publisher
     
     async def handle(self, command: CreateBookCommand) -> Book:
         """
@@ -62,11 +65,21 @@ class CreateBookHandler:
         # Save to repository
         created_book = await self._book_repo.add(book)
         
-        # TODO: Publish BookCreatedEvent
-        # event = BookCreatedEvent(
-        #     book_id=created_book.id,
-        #     title=created_book.title,
-        #     author_ids=command.author_ids
-        # )
+        # Publish BookCreatedEvent
+        if self._event_publisher:
+            event = BookCreatedEvent(
+                book_id=created_book.id,
+                title=created_book.title,
+                author_ids=command.author_ids
+            )
+            await self._event_publisher.publish(
+                routing_key="book.created",
+                event_data={
+                    "book_id": str(event.book_id),
+                    "title": event.title,
+                    "author_ids": [str(aid) for aid in event.author_ids],
+                    "occurred_at": event.occurred_at.isoformat()
+                }
+            )
         
         return created_book

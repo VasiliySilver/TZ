@@ -8,6 +8,7 @@ from src.application.commands.delete_book import DeleteBookCommand, DeleteBookHa
 from src.application.queries.get_all_books import GetAllBooksQuery, GetAllBooksHandler
 from src.application.queries.get_book_by_id import GetBookByIdQuery, GetBookByIdHandler
 from src.infrastructure.database.unit_of_work import UnitOfWork
+from src.infrastructure.messaging.publisher import EventPublisher
 
 
 class BookService:
@@ -16,13 +17,13 @@ class BookService:
     Orchestrates commands and queries through handlers.
     """
     
-    def __init__(self, uow: UnitOfWork):
+    def __init__(self, uow: UnitOfWork, event_publisher: EventPublisher | None = None):
         self._uow = uow
         
-        # Initialize command handlers
-        self._create_handler = CreateBookHandler(uow.books, uow.authors)
-        self._update_handler = UpdateBookHandler(uow.books, uow.authors)
-        self._delete_handler = DeleteBookHandler(uow.books)
+        # Initialize command handlers with event publisher
+        self._create_handler = CreateBookHandler(uow.books, uow.authors, event_publisher)
+        self._update_handler = UpdateBookHandler(uow.books, uow.authors, event_publisher)
+        self._delete_handler = DeleteBookHandler(uow.books, event_publisher)
         
         # Initialize query handlers
         self._get_all_handler = GetAllBooksHandler(uow.books)
@@ -36,22 +37,7 @@ class BookService:
         publication_year: int,
         author_ids: List[UUID]
     ) -> Book:
-        """
-        Create a new book.
-        
-        Args:
-            title: Book title
-            pages: Number of pages
-            genre: Book genre
-            publication_year: Year of publication
-            author_ids: List of author UUIDs
-            
-        Returns:
-            Created Book entity
-            
-        Raises:
-            ValueError: If validation fails or authors don't exist
-        """
+        """Create a new book and publish event"""
         command = CreateBookCommand(
             title=title,
             pages=pages,
@@ -73,23 +59,7 @@ class BookService:
         publication_year: int,
         author_ids: List[UUID]
     ) -> Book:
-        """
-        Update an existing book.
-        
-        Args:
-            book_id: Book UUID
-            title: Updated book title
-            pages: Updated number of pages
-            genre: Updated book genre
-            publication_year: Updated year of publication
-            author_ids: Updated list of author UUIDs
-            
-        Returns:
-            Updated Book entity
-            
-        Raises:
-            ValueError: If book not found or validation fails
-        """
+        """Update an existing book and publish event"""
         command = UpdateBookCommand(
             book_id=book_id,
             title=title,
@@ -104,38 +74,17 @@ class BookService:
         return book
     
     async def delete_book(self, book_id: UUID) -> None:
-        """
-        Delete a book.
-        
-        Args:
-            book_id: Book UUID
-            
-        Raises:
-            ValueError: If book not found
-        """
+        """Delete a book and publish event"""
         command = DeleteBookCommand(book_id=book_id)
         await self._delete_handler.handle(command)
         await self._uow.commit()
     
     async def get_all_books(self) -> List[Book]:
-        """
-        Get all books.
-        
-        Returns:
-            List of Book entities
-        """
+        """Get all books"""
         query = GetAllBooksQuery()
         return await self._get_all_handler.handle(query)
     
     async def get_book_by_id(self, book_id: UUID) -> Optional[Book]:
-        """
-        Get a book by ID.
-        
-        Args:
-            book_id: Book UUID
-            
-        Returns:
-            Book entity or None if not found
-        """
+        """Get a book by ID"""
         query = GetBookByIdQuery(book_id=book_id)
         return await self._get_by_id_handler.handle(query)

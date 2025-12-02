@@ -172,5 +172,6 @@ cython_debug/
 
 # Custom
 deployment/.pgdata
+deployment/.rabbitmq
 .idea
 DEVELOPMENT_PLAN.md
