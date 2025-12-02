@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tz-consumer
+  namespace: tz
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: consumer
+        image: vasiliysilver/tz-consumer:dev
+        imagePullPolicy: IfNotPresent

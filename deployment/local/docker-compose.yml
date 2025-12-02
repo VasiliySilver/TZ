@@ -1,0 +1,46 @@
+---
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: tz_postgres_local
+    command: postgres -c 'max_connections=2000' -c 'jit=off'
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ../../deployment/.pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tz_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tz_rabbitmq_local
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ../../deployment/.rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tz_network
+
+networks:
+  tz_network:
+    driver: bridge

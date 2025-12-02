@@ -1,9 +1,9 @@
 [tool.poetry]
+name = "tz"
 version = "0.1.0"
 description = ""
 authors = ["Repay Team <repay@repay.com>"]
 readme = "README.md"
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
