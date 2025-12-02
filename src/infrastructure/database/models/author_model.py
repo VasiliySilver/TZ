@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from uuid import UUID
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -5,6 +6,9 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from src.infrastructure.database.models.base import Base
 
+
+if TYPE_CHECKING:
+    from src.infrastructure.database.models.book_model import BookModel
 
 class AuthorModel(Base):
     """SQLAlchemy model for Author"""

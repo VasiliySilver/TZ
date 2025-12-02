@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
+
 from uuid import UUID
 from sqlalchemy import String, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from src.infrastructure.database.models.base import Base
+
+
+if TYPE_CHECKING:
+    from src.infrastructure.database.models.author_model import AuthorModel
 
 
 class BookModel(Base):
