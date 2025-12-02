@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import datetime
 from uuid import UUID
 from typing import List
 
@@ -7,30 +7,27 @@ from typing import List
 @dataclass
 class DomainEvent:
     """Base domain event"""
-    occurred_at: datetime
-    def __post_init__(self):
-        if not hasattr(self, 'occurred_at') or self.occurred_at is None:
-            self.occurred_at = datetime.now(timezone.utc)
+    occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
 @dataclass
-class BookCreatedEvent(DomainEvent):
+class BookCreatedEvent:
     """Event raised when a book is created"""
     book_id: UUID
     title: str
     author_ids: List[UUID]
-    occurred_at: datetime = None
+    occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
 @dataclass
-class BookUpdatedEvent(DomainEvent):
+class BookUpdatedEvent:
     """Event raised when a book is updated"""
     book_id: UUID
-    occurred_at: datetime = None
+    occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
 @dataclass
-class BookDeletedEvent(DomainEvent):
+class BookDeletedEvent:
     """Event raised when a book is deleted"""
     book_id: UUID
-    occurred_at: datetime = None
+    occurred_at: datetime = field(default_factory=datetime.utcnow)
